@@ -21,235 +21,218 @@ export const GRAPHQL_MAX_INT = 2147483647;
  * */
 export const GRAPHQL_MIN_INT = -2147483648;
 
-export const GraphQLInt = new GraphQLScalarType<number>({
+/**
+ * @deprecated Brighten Tompkins
+ *
+ * Use `GraphQL<Name>16` from `src/scalars/graphql16.ts` instead.
+ *
+ * There are a few breaking changes from graphql v0.13.2 to v16.0.0.
+ * The most notable is that validation is much more strict by default.
+ *
+ * With that in mind, we are replacing the graphqlscalar types with the
+ * ones from v0.13.2. This is a temporary fix until we can refactor
+ * the schema to be compliant with the new validation rules.
+ */
+export const GraphQLInt = new GraphQLScalarType<number | undefined>({
   name: 'Int',
   description:
     'The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.',
 
   serialize(outputValue) {
-    const coercedValue = serializeObject(outputValue);
-
-    if (typeof coercedValue === 'boolean') {
-      return coercedValue ? 1 : 0;
+    if (outputValue === '') {
+        throw new TypeError(
+            'Int cannot represent non 32-bit signed integer value: (empty string)'
+        );
     }
-
-    let num = coercedValue;
-    if (typeof coercedValue === 'string' && coercedValue !== '') {
-      num = Number(coercedValue);
+    const num = Number(outputValue);
+    if (num !== num || num > GRAPHQL_MAX_INT || num < GRAPHQL_MIN_INT) {
+        throw new TypeError(
+            'Int cannot represent non 32-bit signed integer value: ' +
+                String(outputValue)
+        );
     }
-
-    if (typeof num !== 'number' || !Number.isInteger(num)) {
-      throw new GraphQLError(
-        `Int cannot represent non-integer value: ${inspect(coercedValue)}`,
-      );
+    const int = Math.floor(num);
+    if (int !== num) {
+        throw new TypeError(
+            'Int cannot represent non-integer value: ' + String(outputValue)
+        );
     }
-    if (num > GRAPHQL_MAX_INT || num < GRAPHQL_MIN_INT) {
-      throw new GraphQLError(
-        'Int cannot represent non 32-bit signed integer value: ' +
-          inspect(coercedValue),
-      );
-    }
-    return num;
+    return int;
   },
 
   parseValue(inputValue) {
-    if (typeof inputValue !== 'number' || !Number.isInteger(inputValue)) {
-      throw new GraphQLError(
-        `Int cannot represent non-integer value: ${inspect(inputValue)}`,
-      );
+    if (inputValue === '') {
+        throw new TypeError(
+            'Int cannot represent non 32-bit signed integer value: (empty string)'
+        );
     }
-    if (inputValue > GRAPHQL_MAX_INT || inputValue < GRAPHQL_MIN_INT) {
-      throw new GraphQLError(
-        `Int cannot represent non 32-bit signed integer value: ${inputValue}`,
-      );
+    const num = Number(inputValue);
+    if (num !== num || num > GRAPHQL_MAX_INT || num < GRAPHQL_MIN_INT) {
+        throw new TypeError(
+            'Int cannot represent non 32-bit signed integer value: ' +
+                String(inputValue)
+        );
     }
-    return inputValue;
+    const int = Math.floor(num);
+    if (int !== num) {
+        throw new TypeError(
+            'Int cannot represent non-integer value: ' + String(inputValue)
+        );
+    }
+    return int;
   },
-
-  parseLiteral(valueNode) {
-    if (valueNode.kind !== Kind.INT) {
-      throw new GraphQLError(
-        `Int cannot represent non-integer value: ${print(valueNode)}`,
-        { nodes: valueNode },
-      );
-    }
-    const num = parseInt(valueNode.value, 10);
-    if (num > GRAPHQL_MAX_INT || num < GRAPHQL_MIN_INT) {
-      throw new GraphQLError(
-        `Int cannot represent non 32-bit signed integer value: ${valueNode.value}`,
-        { nodes: valueNode },
-      );
-    }
-    return num;
+  parseLiteral(ast) {
+      if (ast.kind === Kind.INT) {
+          const num = parseInt(ast.value, 10);
+          if (num <= GRAPHQL_MAX_INT && num >= GRAPHQL_MIN_INT) {
+              return num;
+          }
+      }
+      return undefined;
   },
 });
 
-export const GraphQLFloat = new GraphQLScalarType<number>({
+/**
+ * @deprecated Brighten Tompkins
+ *
+ * Use `GraphQL<Name>16` from `src/scalars/graphql16.ts` instead.
+ *
+ * There are a few breaking changes from graphql v0.13.2 to v16.0.0.
+ * The most notable is that validation is much more strict by default.
+ *
+ * With that in mind, we are replacing the graphqlscalar types with the
+ * ones from v0.13.2. This is a temporary fix until we can refactor
+ * the schema to be compliant with the new validation rules.
+ */
+export const GraphQLFloat = new GraphQLScalarType<number | undefined>({
   name: 'Float',
   description:
     'The `Float` scalar type represents signed double-precision fractional values as specified by [IEEE 754](https://en.wikipedia.org/wiki/IEEE_floating_point).',
 
   serialize(outputValue) {
-    const coercedValue = serializeObject(outputValue);
-
-    if (typeof coercedValue === 'boolean') {
-      return coercedValue ? 1 : 0;
+    if (outputValue === '') {
+        throw new TypeError(
+            'Float cannot represent non numeric value: (empty string)'
+        );
     }
-
-    let num = coercedValue;
-    if (typeof coercedValue === 'string' && coercedValue !== '') {
-      num = Number(coercedValue);
+    const num = Number(outputValue);
+    if (num === num) {
+        return num;
     }
-
-    if (typeof num !== 'number' || !Number.isFinite(num)) {
-      throw new GraphQLError(
-        `Float cannot represent non numeric value: ${inspect(coercedValue)}`,
-      );
-    }
-    return num;
+    throw new TypeError(
+        'Float cannot represent non numeric value: ' + String(outputValue)
+    );
   },
 
   parseValue(inputValue) {
-    if (typeof inputValue !== 'number' || !Number.isFinite(inputValue)) {
-      throw new GraphQLError(
-        `Float cannot represent non numeric value: ${inspect(inputValue)}`,
-      );
+    if (inputValue === '') {
+        throw new TypeError(
+            'Float cannot represent non numeric value: (empty string)'
+        );
     }
-    return inputValue;
+    const num = Number(inputValue);
+    if (num === num) {
+        return num;
+    }
+    throw new TypeError(
+        'Float cannot represent non numeric value: ' + String(inputValue)
+    );
   },
 
-  parseLiteral(valueNode) {
-    if (valueNode.kind !== Kind.FLOAT && valueNode.kind !== Kind.INT) {
-      throw new GraphQLError(
-        `Float cannot represent non numeric value: ${print(valueNode)}`,
-        valueNode,
-      );
-    }
-    return parseFloat(valueNode.value);
+  parseLiteral(ast) {
+   return ast.kind === Kind.FLOAT || ast.kind === Kind.INT
+    ? parseFloat(ast.value)
+    : undefined;
   },
 });
 
-export const GraphQLString = new GraphQLScalarType<string>({
+/**
+ * @deprecated Brighten Tompkins
+ *
+ * Use `GraphQL<Name>16` from `src/scalars/graphql16.ts` instead.
+ *
+ * There are a few breaking changes from graphql v0.13.2 to v16.0.0.
+ * The most notable is that validation is much more strict by default.
+ *
+ * With that in mind, we are replacing the graphqlscalar types with the
+ * ones from v0.13.2. This is a temporary fix until we can refactor
+ * the schema to be compliant with the new validation rules.
+ */
+export const GraphQLString = new GraphQLScalarType<string | undefined>({
   name: 'String',
   description:
     'The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.',
 
   serialize(outputValue) {
-    const coercedValue = serializeObject(outputValue);
-
-    // Serialize string, boolean and number values to a string, but do not
-    // attempt to coerce object, function, symbol, or other types as strings.
-    if (typeof coercedValue === 'string') {
-      return coercedValue;
+    if (Array.isArray(outputValue)) {
+      throw new TypeError(
+        `String cannot represent an array value: [${String(outputValue)}]`
+      );
     }
-    if (typeof coercedValue === 'boolean') {
-      return coercedValue ? 'true' : 'false';
-    }
-    if (typeof coercedValue === 'number' && Number.isFinite(coercedValue)) {
-      return coercedValue.toString();
-    }
-    throw new GraphQLError(
-      `String cannot represent value: ${inspect(outputValue)}`,
-    );
+    return String(outputValue);
   },
 
   parseValue(inputValue) {
-    if (typeof inputValue !== 'string') {
-      throw new GraphQLError(
-        `String cannot represent a non string value: ${inspect(inputValue)}`,
+    if (Array.isArray(inputValue)) {
+      throw new TypeError(
+        `String cannot represent an array value: [${String(inputValue)}]`
       );
     }
-    return inputValue;
+    return String(inputValue);
   },
 
-  parseLiteral(valueNode) {
-    if (valueNode.kind !== Kind.STRING) {
-      throw new GraphQLError(
-        `String cannot represent a non string value: ${print(valueNode)}`,
-        { nodes: valueNode },
-      );
-    }
-    return valueNode.value;
+  parseLiteral(ast) {
+      return ast.kind === Kind.STRING ? ast.value : undefined;
   },
 });
 
-export const GraphQLBoolean = new GraphQLScalarType<boolean>({
+/**
+ * @deprecated Brighten Tompkins
+ *
+ * Use `GraphQL<Name>16` from `src/scalars/graphql16.ts` instead.
+ *
+ * There are a few breaking changes from graphql v0.13.2 to v16.0.0.
+ * The most notable is that validation is much more strict by default.
+ *
+ * With that in mind, we are replacing the graphqlscalar types with the
+ * ones from v0.13.2. This is a temporary fix until we can refactor
+ * the schema to be compliant with the new validation rules.
+ */
+export const GraphQLBoolean = new GraphQLScalarType<boolean | undefined>({
   name: 'Boolean',
   description: 'The `Boolean` scalar type represents `true` or `false`.',
 
-  serialize(outputValue) {
-    const coercedValue = serializeObject(outputValue);
-
-    if (typeof coercedValue === 'boolean') {
-      return coercedValue;
-    }
-    if (Number.isFinite(coercedValue)) {
-      return coercedValue !== 0;
-    }
-    throw new GraphQLError(
-      `Boolean cannot represent a non boolean value: ${inspect(coercedValue)}`,
-    );
-  },
-
-  parseValue(inputValue) {
-    if (typeof inputValue !== 'boolean') {
-      throw new GraphQLError(
-        `Boolean cannot represent a non boolean value: ${inspect(inputValue)}`,
-      );
-    }
-    return inputValue;
-  },
-
-  parseLiteral(valueNode) {
-    if (valueNode.kind !== Kind.BOOLEAN) {
-      throw new GraphQLError(
-        `Boolean cannot represent a non boolean value: ${print(valueNode)}`,
-        { nodes: valueNode },
-      );
-    }
-    return valueNode.value;
+  serialize: Boolean,
+  parseValue: Boolean,
+  parseLiteral(ast) {
+      return ast.kind === Kind.BOOLEAN ? ast.value : undefined;
   },
 });
 
-export const GraphQLID = new GraphQLScalarType<string>({
+/**
+ * @deprecated Brighten Tompkins
+ *
+ * Use `GraphQL<Name>16` from `src/scalars/graphql16.ts` instead.
+ *
+ * There are a few breaking changes from graphql v0.13.2 to v16.0.0.
+ * The most notable is that validation is much more strict by default.
+ *
+ * With that in mind, we are replacing the graphqlscalar types with the
+ * ones from v0.13.2. This is a temporary fix until we can refactor
+ * the schema to be compliant with the new validation rules.
+ */
+export const GraphQLID = new GraphQLScalarType<string | undefined>({
   name: 'ID',
   description:
     'The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.',
 
-  serialize(outputValue) {
-    const coercedValue = serializeObject(outputValue);
-
-    if (typeof coercedValue === 'string') {
-      return coercedValue;
-    }
-    if (Number.isInteger(coercedValue)) {
-      return String(coercedValue);
-    }
-    throw new GraphQLError(
-      `ID cannot represent value: ${inspect(outputValue)}`,
-    );
-  },
-
-  parseValue(inputValue) {
-    if (typeof inputValue === 'string') {
-      return inputValue;
-    }
-    if (typeof inputValue === 'number' && Number.isInteger(inputValue)) {
-      return inputValue.toString();
-    }
-    throw new GraphQLError(`ID cannot represent value: ${inspect(inputValue)}`);
-  },
-
-  parseLiteral(valueNode) {
-    if (valueNode.kind !== Kind.STRING && valueNode.kind !== Kind.INT) {
-      throw new GraphQLError(
-        'ID cannot represent a non-string and non-integer value: ' +
-          print(valueNode),
-        { nodes: valueNode },
-      );
-    }
-    return valueNode.value;
-  },
+    serialize: String,
+    parseValue: String,
+    parseLiteral(ast) {
+        return ast.kind === Kind.STRING || ast.kind === Kind.INT
+            ? ast.value
+            : undefined;
+    },
 });
 
 export const specifiedScalarTypes: ReadonlyArray<GraphQLScalarType> =
